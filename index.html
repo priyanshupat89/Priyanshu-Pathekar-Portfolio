@@ -212,7 +212,7 @@ footer .wrap{padding-top:0;}
 }
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;}.reveal{opacity:1;transform:none;}}
 .cert-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px;}
-.cert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;}
+.cert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:20px;}
 .cert-card{display:flex;flex-direction:column;gap:8px;}
 .cert-card.hide{display:none;}
 .cert-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;}
@@ -332,6 +332,26 @@ footer .wrap{padding-top:0;}
 .lab-cta .proj-link{font-size:.95rem;color:var(--ink);}
 @media(max-width:600px){#lab #q{max-width:none;flex-basis:100%;}#lab #cnt{margin-left:0;}#lab .dh h2{font-size:1.35rem;}}
 @media(max-width:1020px){#navlist{gap:2px;}#navlist a{padding:7px 7px;font-size:.76rem;}}
+
+/* ---- Certificates: mobile fixes ---- */
+.cert-card{min-width:0;}
+.cert-title,.cert-note,.cert-org{overflow-wrap:anywhere;}
+@media(max-width:860px){
+  /* safety net: certificate block is always visible on small screens, even if scripts fail */
+  #certifications .reveal{opacity:1;transform:none;}
+}
+@media(max-width:600px){
+  .cert-grid{grid-template-columns:1fr;gap:18px;}
+  .cert-card{padding:16px;border-radius:16px;}
+  .cert-card:hover{transform:none;box-shadow:var(--shadow);}
+  .cert-top{flex-wrap:wrap;}
+  .cert-filters{gap:8px;margin-bottom:22px;}
+  .cert-chip{padding:8px 14px;font-size:.8rem;}
+}
+@supports(height:100dvh){
+  .lightbox img{max-height:calc(100dvh - 190px);}
+  @media(max-width:700px){.lightbox img{max-height:calc(100dvh - 230px);}}
+}
 </style>
 </head>
 <body>
@@ -552,7 +572,7 @@ footer .wrap{padding-top:0;}
 </section>
 
 <section id="certifications">
-  <div class="wrap reveal">
+  <div class="wrap reveal" data-reveal="tall">
     <div class="section-head">
       <div class="eyebrow">Certifications</div>
       <h2>Always learning, with proof</h2>
@@ -761,7 +781,14 @@ try{
   const revealObs=new IntersectionObserver((entries)=>{
     entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
   },{threshold:.12});
-  document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
+  /* Very tall blocks (e.g. the certificate grid stacked on mobile) can never reach a 12% ratio
+     inside one viewport, so they reveal as soon as any part enters the screen instead. */
+  const tallObs=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); tallObs.unobserve(e.target); } });
+  },{threshold:0,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>{
+    (el.hasAttribute('data-reveal')?tallObs:revealObs).observe(el);
+  });
 }catch(e){ document.querySelectorAll('.reveal').forEach(el=>el.classList.add('visible')); }
 
 const navprog=document.getElementById('navprog');
